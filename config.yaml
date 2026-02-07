@@ -1,0 +1,22 @@
+# Copyright 2026 JT Perry
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+model_list:
+
+  - model_name: "claude-3-5-sonnet-20241022"
+    litellm_params:
+      model: "openai/Qwen/Qwen3-Coder-Next"
+      api_base: "https://api.runpod.ai/v2/${RUNPOD_ENDPOINT_ID}/openai/v1"
+      api_key: "os.environ/RUNPOD_API_KEY"
+      timeout: 300
+      drop_params: True

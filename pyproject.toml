@@ -1,0 +1,10 @@
+[project]
+name = "claude-qwen-proxy"
+version = "0.1.0"
+description = "Proxy Claude Code to RunPod Qwen3"
+dependencies = [
+    "litellm[proxy]>=1.0.0",
+]
+
+[tool.uv]
+managed = true

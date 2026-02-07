@@ -1,0 +1,10 @@
+# Secrets
+.env
+
+# Python/UV
+__pycache__/
+.venv/
+.uv/
+
+# OS specific
+.DS_Store

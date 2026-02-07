@@ -1,10 +1,32 @@
-# Secrets
+# Copyright 2026 JT Perry
+# Licensed under Apache 2.0
+
+# --- Project Specifics ---
 .env
+.pod_info
+config.yaml
 
-# Python/UV
-__pycache__/
+# --- Python / uv ---
 .venv/
-.uv/
+__pycache__/
+*.py[cod]
+*$py.class
+uv.lock
 
-# OS specific
+# --- macOS System Files ---
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# --- IDEs (VS Code / PyCharm) ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- Logs & Performance ---
+*.log
+.python-version

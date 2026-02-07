@@ -12,11 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 model_list:
-
   - model_name: "claude-3-5-sonnet-20241022"
     litellm_params:
-      model: "openai/Qwen/Qwen3-Coder-Next"
+      model: "openai/${MODEL_ID}"
       api_base: "https://api.runpod.ai/v2/${RUNPOD_ENDPOINT_ID}/openai/v1"
       api_key: "os.environ/RUNPOD_API_KEY"
-      timeout: 300
       drop_params: True

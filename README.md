@@ -10,40 +10,42 @@ A high-performance, cost-effective backend for [Claude Code](https://claude.ai/c
 * **Pod Persistence**: Detects if you already have a pod running and offers to reuse it to save time and cold-start costs.
 * **Cost Tracking**: Provides real-time session cost estimates based on official 2026 RunPod Flex rates.
 * **Protocol Bridge**: Uses LiteLLM to translate Anthropic's tool-calling protocol to standard OpenAI/vLLM format.
+* **Zero-Config Integration**: Automatically configures Claude Code's environment and settings for both CLI and VS Code during the session.
+* **Seamless Restoration**: Backs up and restores your original Claude Code settings automatically when the session ends.
 
-## 🛠 Prerequisites
+## 📋 Prerequisites
 
 * [uv](https://github.com/astral-sh/uv) (Fast Python package manager)
 * [Node.js](https://nodejs.org/) & `claude` CLI (`npm install -g @anthropic-ai/claude-code`)
 * A RunPod account and [API Key](https://www.google.com/search?q=https://www.runpod.io/console/user/settings).
 
-## 📦 Setup
+## 🛠️ Setup
 
 1. **Clone the repository**:
+
 ```bash
 git clone <your-repo-url>
 cd <your-repo-name>
 
 ```
 
-
 2. **Configure Environment**:
+
 ```bash
 cp .env.example .env
 
 ```
 
-
 Edit `.env` and fill in your `RUNPOD_API_KEY` and `HF_TOKEN`.
+
 3. **Install Dependencies**:
+
 ```bash
 uv sync
 
 ```
 
-
-
-## 🏃 Usage
+## 🏎️ Usage
 
 Run the unified launcher script:
 
@@ -55,13 +57,23 @@ chmod +x start.sh
 
 The script will:
 
-1. Validate your model on Hugging Face.
-2. Quote you an hourly price.
-3. Check for existing pods or spin up a new one.
-4. Launch the LiteLLM proxy.
-5. Launch `claude` code, pre-configured to use your RunPod backend.
+1. **Backup**: Save your existing Claude Code settings from `~/.claude/settings.json`.
+2. **Provision**: Check for existing pods or spin up a new one based on your `MODEL_ID`.
+3. **Configure**: Automatically point Claude Code (CLI & VS Code) to the local proxy.
+4. **Proxy**: Launch the LiteLLM proxy and wait for the model to load.
+5. **Wait**: Provide a 10-second window to launch VS Code before the CLI starts.
+6. **Launch**: Start `claude` code pre-configured for your RunPod backend.
+7. **Cleanup**: Restore your original settings and offer to delete the Pod on exit.
 
-## 💰 GPU Estimation Logic
+### 🖥️ VS Code Integration
+
+To use the proxy with the VS Code extension, you must launch VS Code from a **separate terminal tab** while the script is running:
+
+1. Start `./start.sh` in Terminal Tab A.
+2. Once the script says "Proxy is ready", open Terminal Tab B.
+3. Run `code .` in Terminal Tab B.
+
+## 🧠 GPU Estimation Logic
 
 The tool automatically selects the GPU tier based on your `MODEL_ID`:
 
@@ -77,5 +89,3 @@ Copyright 2026 JT Perry
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at:
 
 [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
-
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.

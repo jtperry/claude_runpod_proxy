@@ -2,16 +2,24 @@
 # Licensed under Apache 2.0
 
 model_list:
+  # Deployment 1: Local Model (Prioritized)
+  - model_name: "claude-3-5-sonnet-20241022"
+    litellm_params:
+      model: "ollama/${LOCAL_MODEL_ID}"
+      api_base: "${LOCAL_API_BASE}"
+      order: 1 # Tried first if configured
+    
+  # Deployment 2: RunPod Serverless
   - model_name: "claude-3-5-sonnet-20241022"
     litellm_params:
       model: "openai/${MODEL_ID}"
       api_base: "https://api.runpod.ai/v2/${RUNPOD_ENDPOINT_ID}/openai/v1"
-      api_key: "os.environ/RUNPOD_API_KEY"
-  - model_name: "*"
-    litellm_params:
-      model: "openai/${MODEL_ID}"
-      api_base: "https://api.runpod.ai/v2/${RUNPOD_ENDPOINT_ID}/openai/v1"
-      api_key: "os.environ/RUNPOD_API_KEY"
+      api_key: "${RUNPOD_API_KEY}"
+      order: 2 # Tried if local fails or is not provided
+
+router_settings:
+  enable_pre_call_checks: true # Required for 'order' based priority
+  routing_strategy: simple-shuffle
 
 litellm_settings:
   drop_params: True

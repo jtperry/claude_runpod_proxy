@@ -25,39 +25,70 @@ else
     exit 1
 fi
 
-# 1. Provision / Discovery
-EID=$(uv run manage_pod.py up | tail -n 1)
-if [[ -z "$EID" || "$EID" == *"Aborted"* ]]; then exit 0; fi
+# 0. Check for Local LLM Server
+# Probe Ollama (11434) or standard OpenAI-compatible ports (8000)
+DETECTED_LOCAL_URL=""
+if curl -s http://localhost:11434/api/tags > /dev/null; then
+    DETECTED_LOCAL_URL="http://localhost:11434"
+    LOCAL_TYPE="ollama"
+elif curl -s http://localhost:8000/v1/models > /dev/null; then
+    DETECTED_LOCAL_URL="http://localhost:8000"
+    LOCAL_TYPE="openai-compatible"
+fi
 
-export RUNPOD_ENDPOINT_ID=$EID
+# Determine if we should use local based on detection or .env
+if [ -n "$DETECTED_LOCAL_URL" ] || [ -n "$LOCAL_API_BASE" ]; then
+    ACTUAL_LOCAL_URL="${LOCAL_API_BASE:-$DETECTED_LOCAL_URL}"
+    echo "🏠 Local LLM detected at $ACTUAL_LOCAL_URL"
+    read -p "❓ Use local model instead of spinning up RunPod? (y/n): " use_local
+    
+    if [[ $use_local == [yY] ]]; then
+        # Use .env default or fall back to the cloud MODEL_ID
+        DEFAULT_LOCAL_NAME="${LOCAL_MODEL_ID:-$MODEL_ID}"
+        read -p "📝 Enter local model name (default: $DEFAULT_LOCAL_NAME): " input_name
+        
+        export LOCAL_MODEL_ID="${input_name:-$DEFAULT_LOCAL_NAME}"
+        export LOCAL_API_BASE="$ACTUAL_LOCAL_URL"
+        export USE_LOCAL_ONLY=true
+    fi
+fi
 
-# 2. Start Proxy
+# 1. Provision RunPod (Skip if using local only)
+EID=""
+if [ "$USE_LOCAL_ONLY" != "true" ]; then
+    EID=$(uv run manage_pod.py up | tail -n 1)
+    if [[ -z "$EID" || "$EID" == *"Aborted"* ]]; then exit 0; fi
+    export RUNPOD_ENDPOINT_ID=$EID
+fi
+
+# 2. Start LiteLLM Proxy
 echo "🚀 Starting LiteLLM Proxy..."
+export LITELLM_MASTER_KEY="${ANTHROPIC_API_KEY:-sk-admin-key}"
+export EXPERIMENTAL_UI_LOGIN="True"
+
+# LiteLLM stays in the mix and manages both cloud and local backends
 uv run litellm --config config.yaml --port 4000 > /dev/null 2>&1 &
 LPID=$!
 
 cleanup() {
     echo -e "\n-----------------------------------"
-    echo "📊 Total Session Cost: $(uv run manage_pod.py cost)"
-    echo "-----------------------------------"
-    read -p "🛑 Delete Pod $EID? (y/n): " confirm
-    [[ $confirm == [yY] ]] && uv run manage_pod.py down $EID
+    if [ -n "$EID" ]; then
+        echo "📊 Total Session Cost: $(uv run manage_pod.py cost)"
+        echo "-----------------------------------"
+        read -p "🛑 Delete Pod $EID? (y/n): " confirm
+        [[ $confirm == [yY] ]] && uv run manage_pod.py down $EID
+    fi
     kill $LPID 2>/dev/null || true
 }
 trap cleanup EXIT
 
-# 3. Intelligent Wait for Worker
-# Polling the RunPod API to see when the model is actually loaded
-uv run manage_pod.py wait $EID
+# 3. Intelligent Wait
+if [ "$USE_LOCAL_ONLY" == "true" ]; then
+    echo "✅ Using local backend ($LOCAL_MODEL_ID). No RunPod wait required."
+else
+    uv run manage_pod.py wait $EID
+fi
 
 # 4. Ready State
-echo -e "\n✅ Ready! All traffic routed to $MODEL_ID."
-echo "👉 VS Code: Run 'code .' in a second terminal now."
-echo "🚀 Launching Claude CLI in 5 seconds..."
-sleep 5
-
-# 5. Launch Claude Code
-export ANTHROPIC_BASE_URL="http://0.0.0.0:4000"
-export ANTHROPIC_MODEL="claude-3-5-sonnet-20241022"
-# Note: Claude will ask to use the custom API key; answer "Yes"
-claude
+echo -e "\n✅ Ready! Traffic managed by LiteLLM."
+echo "🖥️  LiteLLM Console: http://0.0.0.0:4000/

@@ -12,6 +12,8 @@ A high-performance, cost-effective backend for [Claude Code](https://claude.ai/c
 * **Protocol Bridge**: Uses LiteLLM to translate Anthropic's tool-calling protocol to standard OpenAI/vLLM format.
 * **Zero-Config Integration**: Automatically configures Claude Code's environment and settings for both CLI and VS Code during the session.
 * **Seamless Restoration**: Backs up and restores your original Claude Code settings automatically when the session ends.
+* **Local Backend Support**: Detects local LLM servers (Ollama, LM Studio) and offers to prioritize them over cloud GPUs.
+* **Admin Console**: Includes a built-in LiteLLM UI for monitoring request logs and model performance.
 
 ## 📋 Prerequisites
 
@@ -36,7 +38,7 @@ cp .env.example .env
 
 ```
 
-Edit `.env` and fill in your `RUNPOD_API_KEY` and `HF_TOKEN`.
+Edit `.env` and fill in your `RUNPOD_API_KEY`, `HF_TOKEN`, and optional `LOCAL_MODEL_ID` settings.
 
 3. **Install Dependencies**:
 
@@ -57,20 +59,19 @@ chmod +x start.sh
 
 The script will:
 
-1. **Backup**: Save your existing Claude Code settings from `~/.claude/settings.json`.
-2. **Provision**: Check for existing pods or spin up a new one based on your `MODEL_ID`.
-3. **Configure**: Automatically point Claude Code (CLI & VS Code) to the local proxy.
-4. **Proxy**: Launch the LiteLLM proxy and wait for the model to load.
-5. **Wait**: Provide a 10-second window to launch VS Code before the CLI starts.
-6. **Launch**: Start `claude` code pre-configured for your RunPod backend.
-7. **Cleanup**: Restore your original settings and offer to delete the Pod on exit.
+1. **Local Check**: Probes for local Ollama or OpenAI-compatible servers and offers to use them.
+2. **Provision**: Check for existing pods or spin up a new one on RunPod if local is skipped.
+3. **Proxy**: Launch LiteLLM with Admin UI enabled at `http://0.0.0.0:4000/ui`.
+4. **Wait**: Poll the RunPod API until the worker is warm (IDLE/RUNNING).
+5. **Launch**: Start `claude` code pre-configured for the LiteLLM gateway.
+6. **Cleanup**: Offer to delete the Pod on exit and restore local settings.
 
 ### 🖥️ VS Code Integration
 
-To use the proxy with the VS Code extension, you must launch VS Code from a **separate terminal tab** while the script is running:
+To use the proxy with the VS Code extension, launch VS Code while the script is active:
 
 1. Start `./start.sh` in Terminal Tab A.
-2. Once the script says "Proxy is ready", open Terminal Tab B.
+2. Once the script says "Ready", open Terminal Tab B.
 3. Run `code .` in Terminal Tab B.
 
 ## 🧠 GPU Estimation Logic
